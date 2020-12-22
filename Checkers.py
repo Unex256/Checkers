@@ -11,9 +11,9 @@ class Checkers(Board):
         self.legal_moves = []
 
     def game_over(self):
-        if self.whitePeaces == 0:
+        if self.whitePeaces < 1:
             return "black"
-        if self.blackPeaces == 0:
+        if self.blackPeaces < 1:
             return "white"
 
     def change_turn(self):
@@ -60,11 +60,13 @@ class Checkers(Board):
         elif self.check_if_peace_there(col, row):
             self.check_available_moves(col, row)
         else:
-            pass
-
+            return False
 
     def check_if_peace_there(self, col, row):
-        return str(self.board[row][col]) == self.turn
+        try:
+            return str(self.board[row][col]) == self.turn
+        except IndexError:
+            return False
 
     def check_available_moves(self, col, row):
         if self.turn == "black":
@@ -74,58 +76,13 @@ class Checkers(Board):
 
     def check_available_moves_black(self, col, row):
         self.legal_moves = []
-        if row < 7 and col < 7 and self.board[row + 1][col + 1] is None:
-            self.legal_moves.append(AvailableMoves(row + 1, col + 1, self.win, col, row, False))
-        elif row < 6 and col < 6 and str(self.board[row + 1][col + 1]) == "white":
-            if row < 6 and col < 6 and self.board[row + 2][col + 2] is None:
-                self.legal_moves.append(AvailableMoves(row + 2, col + 2, self.win, col, row, True))
-
-        if row < 7 and col > 0 and self.board[row + 1][col - 1] is None:
-            self.legal_moves.append(AvailableMoves(row + 1, col - 1, self.win, col, row, False))
-        elif row < 6 and col > 1 and str(self.board[row + 1][col - 1]) == "white":
-            if row < 6 and col > 1 and self.board[row + 2][col - 2] is None:
-                self.legal_moves.append(AvailableMoves(row + 2, col - 2, self.win, col, row, True))
-
-        if self.board[row][col].get_if_king():
-            if row > 0 and col < 7 and self.board[row - 1][col + 1] is None:
-                self.legal_moves.append(AvailableMoves(row - 1, col + 1, self.win, col, row, False))
-            elif row > 1 and col < 6 and str(self.board[row - 1][col + 1]) == "white":
-                if row > 1 and col < 6 and self.board[row - 2][col + 2] is None:
-                    self.legal_moves.append(AvailableMoves(row - 2, col + 2, self.win, col, row, True))
-
-            if row > 0 and col > 0 and self.board[row - 1][col - 1] is None:
-                self.legal_moves.append(AvailableMoves(row - 1, col - 1, self.win, col, row, False))
-            elif row > 1 and col > 1 and str(self.board[row - 1][col - 1]) == "white":
-                if row > 1 and col > 1 and self.board[row - 2][col - 2] is None:
-                    self.legal_moves.append(AvailableMoves(row - 2, col - 2, self.win, col, row, True))
+        diagonals = self.get_diagonal_tuple_black(row, col)
+        self.add_available_moves(diagonals, row, col)
 
     def check_available_moves_white(self, col, row):
         self.legal_moves = []
-
-        if row > 0 and col < 7 and self.board[row - 1][col + 1] is None:
-            self.legal_moves.append(AvailableMoves(row - 1, col + 1, self.win, col, row, False))
-        elif row > 1 and col < 6 and str(self.board[row - 1][col + 1]) == "black":
-            if row > 1 and col < 6 and self.board[row - 2][col + 2] is None:
-                self.legal_moves.append(AvailableMoves(row - 2, col + 2, self.win, col, row, True))
-
-        if row > 0 and col > 0 and self.board[row - 1][col - 1] is None:
-            self.legal_moves.append(AvailableMoves(row - 1, col - 1, self.win, col, row, False))
-        elif row > 1 and col > 1 and str(self.board[row - 1][col - 1]) == "black":
-            if row > 1 and col > 1 and self.board[row - 2][col - 2] is None:
-                self.legal_moves.append(AvailableMoves(row - 2, col - 2, self.win, col, row, True))
-
-        if self.board[row][col].get_if_king():
-            if row < 7 and col < 7 and self.board[row + 1][col + 1] is None:
-                self.legal_moves.append(AvailableMoves(row + 1, col + 1, self.win, col, row, False))
-            elif row < 6 and col < 6 and str(self.board[row + 1][col + 1]) == "black":
-                if row < 6 and col < 6 and self.board[row + 2][col + 2] is None:
-                    self.legal_moves.append(AvailableMoves(row + 2, col + 2, self.win, col, row, True))
-
-            if row < 7 and col > 0 and self.board[row + 1][col - 1] is None:
-                self.legal_moves.append(AvailableMoves(row + 1, col - 1, self.win, col, row, False))
-            elif row < 6 and col > 1 and str(self.board[row + 1][col - 1]) == "black":
-                if row < 6 and col > 1 and self.board[row + 2][col - 2] is None:
-                    self.legal_moves.append(AvailableMoves(row + 2, col - 2, self.win, col, row, True))
+        diagonals = self.get_diagonal_tuple_white(row, col)
+        self.add_available_moves(diagonals, row, col)
 
     def check_if_used_legal_move(self, col, row):
         for move in self.legal_moves:
@@ -156,3 +113,85 @@ class Checkers(Board):
             self.win.blit(WHITE, (0, TOOLBAR_START))
         else:
             self.win.blit(BLACK, (0, TOOLBAR_START))
+
+    @staticmethod
+    def diagonal_finder(row, col, diagonal, distance):
+        if diagonal == 1:
+            row = row - distance
+            col = col - distance
+            return row, col
+        elif diagonal == 2:
+            row = row - distance
+            col = col + distance
+            return row, col
+        elif diagonal == 3:
+            row = row + distance
+            col = col + distance
+            return row, col
+        else:
+            row = row + distance
+            col = col - distance
+            return row, col
+
+    def is_empty(self, row, col, diagonal):
+        row, col = self.diagonal_finder(row, col, diagonal, 1)
+        try:
+            if self.board[row][col] is None:
+                return True
+            else:
+                return False
+        except IndexError:
+            return False
+
+
+    def is_empty_attack(self, row, col, diagonal):
+        row, col = self.diagonal_finder(row, col, diagonal, 2)
+        try:
+            if self.board[row][col] is None:
+                return True
+            else:
+                return False
+        except IndexError:
+            return False
+
+    def get_pos_color(self, row, col):
+        return str(self.board[row][col])
+
+    def get_diagonal_tuple_white(self, row, col):
+        if self.board[row][col].get_if_king():
+            return tuple(range(1, 5))
+        else:
+            return tuple(range(1, 3))
+
+    def get_diagonal_tuple_black(self, row, col):
+        if self.board[row][col].get_if_king():
+            return tuple(range(1, 5))
+        else:
+            return tuple(range(3, 5))
+
+    def add_available_moves(self, diagonals, row, col):
+        info_true = (self.win, col, row, True)
+        info_false = (self.win, col, row, False)
+        for diagonal in diagonals:
+            if self.is_empty(row, col, diagonal):
+                self.legal_moves.append(AvailableMoves(*self.diagonal_finder(row, col, diagonal, 1), *info_false))
+            elif self.can_attack(row, col, diagonal):
+                self.legal_moves.append(AvailableMoves(*self.diagonal_finder(row, col, diagonal, 2), *info_true))
+
+    def get_opponent_color(self):
+        if self.turn == "black":
+            return "white"
+        else:
+            return "black"
+
+    def can_attack(self, row, col, diagonal):
+        if self.is_empty_attack(row, col, diagonal) and self.enemy_is_close(row, col, diagonal):
+            return True
+        else:
+            return False
+
+    def enemy_is_close(self, row, col, diagonal):
+        if self.get_pos_color(*self.diagonal_finder(row, col, diagonal, 1)) == self.get_opponent_color():
+            return True
+        else:
+            return False

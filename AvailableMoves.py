@@ -11,8 +11,8 @@ class AvailableMoves():
         self.draw_legal_move()
 
     def find_position(self, col, row):
-        self.x = col * TILE_SIZE
-        self.y = row * TILE_SIZE
+            self.x = col * TILE_SIZE
+            self.y = row * TILE_SIZE
 
     def draw_legal_move(self):
         self.find_position(self.col, self.row)
